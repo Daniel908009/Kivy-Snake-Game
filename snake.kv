@@ -1,0 +1,41 @@
+<MainGrid>
+    cols: 1
+    size_hint: 1, 1
+    sizeOfGrid: 15
+    Label:
+        text: 'Snake Game'
+        font_size: 35
+        size_hint_y: None
+        size_hint: 1, 0.1
+    GridLayout:
+        cols: 2
+        size_hint_y: None
+        size_hint: 1, 0.1
+        Label:
+            id: timeLabel
+            text: 'Time: 0'
+            font_size: 20
+        Label:
+            id: scoreLabel
+            text: 'Score: 0'
+            font_size: 20
+    GridLayout:
+        size_hint_y: None
+        size_hint: (1,0.7)
+        id: snakeGrid
+        on_kv_post: root.setupGrid()
+    GridLayout:
+        cols: 2
+        size_hint_y: None
+        size_hint: 1, 0.1
+        Button:
+            text: 'Settings'
+            on_press: root.openSettings()
+        Button:
+            text: 'Start'
+            on_press: root.startGame()
+
+<Tile>
+    size_hint: 1, 1
+    text: 'L' # just for testing purposes
+    on_press: root.click()
