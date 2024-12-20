@@ -2,6 +2,14 @@
     cols: 1
     size_hint: 1, 1
     sizeOfGrid: 15
+    time: 0
+    snakeDirection: 'up'
+    snake: []
+    numberOfFood: 1
+    food: []
+    score: 0
+    timeClockEvent: None
+    gameMoveEvent: None
     Label:
         text: 'Snake Game'
         font_size: 35
@@ -13,7 +21,7 @@
         size_hint: 1, 0.1
         Label:
             id: timeLabel
-            text: 'Time: 0'
+            text: 'Time: 00:00'
             font_size: 20
         Label:
             id: scoreLabel
@@ -22,20 +30,50 @@
     GridLayout:
         size_hint_y: None
         size_hint: (1,0.7)
+        padding: 20
         id: snakeGrid
-        on_kv_post: root.setupGrid()
+        on_kv_post: root.resetGame()
     GridLayout:
         cols: 2
         size_hint_y: None
         size_hint: 1, 0.1
+        padding: 10
         Button:
             text: 'Settings'
             on_press: root.openSettings()
         Button:
+            id: startQuitButton
             text: 'Start'
+            background_color: 0, 1, 0, 1
             on_press: root.startGame()
 
 <Tile>
     size_hint: 1, 1
-    text: 'L' # just for testing purposes
     on_press: root.click()
+
+<SettingsPopup>
+    title: 'Settings'
+    size_hint: (0.7, 0.7)
+    BoxLayout:
+        orientation: 'vertical'
+        padding: 10
+        GridLayout:
+            cols: 2
+            size_hint_y: None
+            size_hint: 1, 0.8
+            Label:
+                text: 'Size of Grid'
+            TextInput:
+                id: sizeSetting
+                text: '15'
+        GridLayout:
+            cols: 2
+            size_hint_y: None
+            size_hint: 1, 0.2
+            padding: 10
+            Button:
+                text: 'Cancel'
+                on_press: root.dismiss()
+            Button:
+                text: 'Apply'
+                on_press: root.applySettings()
