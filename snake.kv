@@ -77,3 +77,15 @@
             Button:
                 text: 'Apply'
                 on_press: root.applySettings()
+
+<ResultsPopup>
+    title: 'Results'
+    size_hint: (0.7, 0.7)
+    BoxLayout:
+        orientation: 'vertical'
+        padding: 10
+        Label:
+            text: 'Results will be here'
+        Button:
+            text: 'Close'
+            on_press: root.dismiss()
