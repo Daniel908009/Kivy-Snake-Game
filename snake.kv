@@ -7,7 +7,7 @@
     snake: []
     numberOfFood: 1
     food: []
-    score: 0
+    score: 1
     timeClockEvent: None
     gameMoveEvent: None
     Label:
@@ -30,7 +30,7 @@
     GridLayout:
         size_hint_y: None
         size_hint: (1,0.7)
-        padding: 20
+        padding: (30,0)
         id: snakeGrid
         on_kv_post: root.resetGame()
     GridLayout:
