@@ -6,6 +6,7 @@ from kivy.clock import Clock
 from kivy.core.window import Window
 import random
 
+# class for settings popup
 class SettingsPopup(Popup):
     def __init__(self, caller): # more things will be added later
         super(SettingsPopup, self).__init__()
@@ -14,17 +15,21 @@ class SettingsPopup(Popup):
         # code for applying settings will be added later
         self.dismiss()
 
+# class for results popup
 class ResultsPopup(Popup):
     pass
 
+# class for tiles of the snake grid
 class Tile(Button):
-    def __init__(self, caller, id):
+    def __init__(self, caller, id, pos):
         super(Tile, self).__init__()
         self.caller = caller
         self.id = id
+        self.poss = pos
     def click(self):
         pass # maybe I will add something here later
 
+# class for the main grid
 class MainGrid(GridLayout):
     def __init__(self):
         super(MainGrid, self).__init__()
@@ -32,14 +37,23 @@ class MainGrid(GridLayout):
     def setupGrid(self):
         self.ids.snakeGrid.clear_widgets()
         self.ids.snakeGrid.cols = self.sizeOfGrid
+        self.snakeGrid = []
         for i in range(self.sizeOfGrid):
+            self.snakeGrid.append([])
             for j in range(self.sizeOfGrid):
-                self.ids.snakeGrid.add_widget(Tile(self, i*self.sizeOfGrid+j))
+                tile = Tile(self, i*self.sizeOfGrid+j, [i, j])
+                self.ids.snakeGrid.add_widget(tile)
+                self.snakeGrid[i].append(tile)
+        
     def setupSnake(self):
-        self.snake = [int(self.sizeOfGrid//2)+int(self.sizeOfGrid)*int(self.sizeOfGrid//2)]
-        for i in self.snake:
+        self.snake = [[int(self.sizeOfGrid/2), int(self.sizeOfGrid/2)]]
+        #print(self.snake)
+        for pos in self.snake:
             for tile in self.ids.snakeGrid.children:
-                if tile.id == i:
+                #print(tile.poss)
+                #print(pos)
+                if tile.poss == pos:
+                    #print("found")
                     tile.background_color = (0, 1, 0, 1)
     def keyAction(self, instance, keyboard, keycode, text, modifiers):
         if self.ids.startQuitButton.text == "Quit": # the direction can only be changed when the game is running
@@ -89,52 +103,49 @@ class MainGrid(GridLayout):
     def moveSnake(self, direction):
         for part in self.snake:
             for tile in self.ids.snakeGrid.children:
-                if tile.id == part:
+                if tile.poss == part:
                     tile.background_color = (1, 1, 1, 1)
         copySnake = []
         for i in self.snake:
             copySnake.append(i)
         if direction == "up":
-            self.snake[0] -= self.sizeOfGrid
-            for i in range(len(self.snake)):
-                if i != 0:
-                    self.snake[i] = copySnake[i-1]
+            self.snake[0] = [self.snake[0][0]-1, self.snake[0][1]]
+            for i in range(1, len(self.snake)):
+                self.snake[i] = copySnake[i-1]
         elif direction == "down":
-            self.snake[0] += self.sizeOfGrid
-            for i in range(len(self.snake)):
-                if i != 0:
-                    self.snake[i] = copySnake[i-1]
+            self.snake[0] = [self.snake[0][0]+1, self.snake[0][1]]
+            for i in range(1, len(self.snake)):
+                self.snake[i] = copySnake[i-1]
         elif direction == "left":
-            self.snake[0] -= 1
-            for i in range(len(self.snake)):
-                if i != 0:
-                    self.snake[i] = copySnake[i-1]
+            self.snake[0] = [self.snake[0][0], self.snake[0][1]-1]
+            for i in range(1, len(self.snake)):
+                self.snake[i] = copySnake[i-1]
         elif direction == "right":
-            self.snake[0] += 1
-            for i in range(len(self.snake)):
-                if i != 0:
-                    self.snake[i] = copySnake[i-1]
+            self.snake[0] = [self.snake[0][0], self.snake[0][1]+1]
+            for i in range(1, len(self.snake)):
+                self.snake[i] = copySnake[i-1]
         else:
             self.snakeDirection = "up"
         for part in self.snake:
             for tile in self.ids.snakeGrid.children:
-                if tile.id == part:
+                if tile.poss == part:
                     tile.background_color = (0, 1, 0, 1)
         for apple in self.food:
-            if self.snake[0] == apple[0]*self.sizeOfGrid+apple[1]:
-                self.snake.append(apple[0]*self.sizeOfGrid+apple[1])
+            if self.snake[0] == apple:
+                self.snake.append(apple)
                 self.food.remove(apple)
                 self.score += 1
                 self.ids.scoreLabel.text = 'Score: {}'.format(self.score)
+                self.collectedFood = True
         self.checkCollision()
+        self.collectedFood = False
     def checkCollision(self):
-        if self.snake[0] < 0 or self.snake[0] >= self.sizeOfGrid*self.sizeOfGrid:
-            self.startGame() # calling the startGame function because this will open the results popup
-        #print(self.snake)
-        # checking sides is not really possible because of the way I made the board, however I dont think it is necessary, will try to fix it later if I come up with something
+        # checking if the snake has hit the wall or itself, I had to rework the grid system to make this work
+        if self.snake[0][0] < 0 or self.snake[0][0] >= self.sizeOfGrid or self.snake[0][1] < 0 or self.snake[0][1] >= self.sizeOfGrid:
+            self.startGame()
         for i in range(len(self.snake)):
             if i != 0:
-                if self.snake[0] == self.snake[i]:
+                if self.snake[0] == self.snake[i] and self.collectedFood == False:
                     self.startGame()
     def generateFood(self):
         coords =[random.randint(0, self.sizeOfGrid-1), random.randint(0, self.sizeOfGrid-1)]
@@ -142,7 +153,7 @@ class MainGrid(GridLayout):
             coords =[random.randint(0, self.sizeOfGrid-1), random.randint(0, self.sizeOfGrid-1)]
         self.food.append(coords)
         for tile in self.ids.snakeGrid.children:
-            if tile.id == coords[0]*self.sizeOfGrid+coords[1]:
+            if tile.poss == coords:
                 tile.background_color = (1, 0, 0, 1)
     def resetGame(self):
         self.time = 0
@@ -155,10 +166,11 @@ class MainGrid(GridLayout):
         self.setupSnake()
         self.generateFood()
 
-
+# main app class
 class SnakeApp(App):
     def build(self):
         return MainGrid()
-    
+
+# running the app
 if __name__ == "__main__":
     SnakeApp().run()
