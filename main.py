@@ -8,16 +8,35 @@ import random
 
 # class for settings popup
 class SettingsPopup(Popup):
-    def __init__(self, caller): # more things will be added later
+    def __init__(self, caller):
         super(SettingsPopup, self).__init__()
         self.caller = caller
+    def setSettings(self):
+        self.ids.sizeSetting.text = str(self.caller.sizeOfGrid)
+        self.ids.sizeSlider.value = self.caller.sizeOfGrid
+        self.ids.speedSetting.text = str(self.caller.speed)
+        self.ids.speedSlider.value = self.caller.speed
+        self.ids.foodSetting.text = str(self.caller.numberOfFood)
     def applySettings(self):
-        # code for applying settings will be added later
+        self.caller.sizeOfGrid = int(self.ids.sizeSetting.text)
+        self.caller.speed = float(self.ids.speedSetting.text)
+        self.caller.numberOfFood = int(self.ids.foodSetting.text)
+        self.caller.resetGame()
+        self.caller.settingsOpen = False
+        self.dismiss()
+    def dismissPopup(self):
+        self.caller.settingsOpen = False
         self.dismiss()
 
 # class for results popup
 class ResultsPopup(Popup):
-    pass
+    def __init__(self, caller):
+        super(ResultsPopup, self).__init__()
+        self.caller = caller
+    def setResults(self):
+        self.ids.timeLabel.text = self.caller.ids.timeLabel.text
+        self.ids.scoreLabel.text = self.caller.ids.scoreLabel.text
+        self.ids.speedLabel.text = 'Speed: {}'.format(self.caller.speed)
 
 # class for tiles of the snake grid
 class Tile(Button):
@@ -27,7 +46,7 @@ class Tile(Button):
         self.id = id
         self.poss = pos
     def click(self):
-        pass # maybe I will add something here later
+        pass
 
 # class for the main grid
 class MainGrid(GridLayout):
@@ -47,13 +66,9 @@ class MainGrid(GridLayout):
         
     def setupSnake(self):
         self.snake = [[int(self.sizeOfGrid/2), int(self.sizeOfGrid/2)]]
-        #print(self.snake)
         for pos in self.snake:
             for tile in self.ids.snakeGrid.children:
-                #print(tile.poss)
-                #print(pos)
                 if tile.poss == pos:
-                    #print("found")
                     tile.background_color = (0, 1, 0, 1)
     def keyAction(self, instance, keyboard, keycode, text, modifiers):
         if self.ids.startQuitButton.text == "Quit": # the direction can only be changed when the game is running
@@ -67,8 +82,12 @@ class MainGrid(GridLayout):
                 self.snakeDirection = "right"
     def openSettings(self):
         popup = SettingsPopup(self)
+        self.settingsOpen = True
+        popup.setSettings()
         popup.open()
     def updateTime(self, t):
+        if self.settingsOpen:
+            return
         self.time += 1
         minutes, seconds = divmod(self.time, 60)
         self.ids.timeLabel.text = 'Time: {:02}:{:02}'.format(minutes, seconds)
@@ -77,16 +96,19 @@ class MainGrid(GridLayout):
             self.ids.startQuitButton.text = "Quit"
             self.ids.startQuitButton.background_color = (1, 1, 0, 1)
             self.timeClockEvent = Clock.schedule_interval(self.updateTime, 1)
-            self.gameClockEvent = Clock.schedule_interval(self.gameLoop, 1)
+            self.gameClockEvent = Clock.schedule_interval(self.gameLoop, 1*(self.speed/5))
         else:
             self.ids.startQuitButton.text = "Start"
             self.ids.startQuitButton.background_color = (0, 1, 0, 1)
             self.timeClockEvent.cancel()
             self.gameClockEvent.cancel()
-            popup = ResultsPopup() # will be enhanced later
+            popup = ResultsPopup(self)
+            popup.setResults()
             popup.open()
             self.resetGame()
     def gameLoop(self, t):
+        if self.settingsOpen:
+            return
         # the movement logic
         if self.snakeDirection != '':
             if self.snakeDirection == "up":
@@ -157,14 +179,22 @@ class MainGrid(GridLayout):
                 tile.background_color = (1, 0, 0, 1)
     def resetGame(self):
         self.time = 0
+        if hasattr(self, 'timeClockEvent') and len(self.snakeGrid) > 0 and self.ids.startQuitButton.text == "Quit": # checking for the snakeGrid to prevent errors when starting the game for the first time
+            self.timeClockEvent.cancel()
+        if hasattr(self, 'gameClockEvent') and len(self.snakeGrid) > 0 and self.ids.startQuitButton.text == "Quit":
+            self.gameClockEvent.cancel()
         self.ids.timeLabel.text = 'Time: 00:00'
         self.score = 1
         self.ids.scoreLabel.text = 'Score: 1'
         self.snakeDirection = "up"
+        self.collectedFood = False
+        self.ids.startQuitButton.text = "Start"
+        self.ids.startQuitButton.background_color = (0, 1, 0, 1)
         self.food = []
         self.setupGrid()
         self.setupSnake()
-        self.generateFood()
+        for i in range(self.numberOfFood):
+            self.generateFood()
 
 # main app class
 class SnakeApp(App):
